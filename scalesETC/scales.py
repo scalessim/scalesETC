@@ -6,6 +6,7 @@
 from scalesETC.io import *
 from scalesETC.focal_plane import *
 from scalesETC.psfs import *
+from scalesETC.targs import *
 
 from ipywidgets import IntProgress, Label
 from IPython.display import display
@@ -52,7 +53,7 @@ class SCALES:
              dit=1,nexps=1,vortex=False,extraction='optimal',
              vapor = 1.0, airmass = 1.0, change_psfs=False,
              shot_off=False,verbose=False,
-             skytrans_off=False,bkg_off=False):
+             skytrans_off=False,bkg_off=False,bkgsub=True):
  
         self.skybg = SkyBG(vapor,airmass)
         self.skytrans = SkyTrans(vapor,airmass)
@@ -101,13 +102,84 @@ class SCALES:
         img_seq_bg,IFScube_seq_bg = self.fp.get_fp(dit*u.s,nexps,self.pmat,self.rmat,Target=targ_bg,
                                  bg_off = bkg_off,extraction=extraction,shot_off=shot_off,
                                  verbose=verbose,medium=self.med,vortex=False)
-        
-        if vortex==False:
-            return img_seq-img_seq_bg, IFScube_seq-IFScube_seq_bg, self.rlams
-        else:
-            return img_seq-img_seq_bg, IFScube_seq-IFScube_seq_bg, img_seq_nc-img_seq_bg, IFScube_seq_nc-IFScube_seq_bg, self.rlams
+
+        if bkgsub==True:
+            if vortex==False:
+                return img_seq-img_seq_bg, IFScube_seq-IFScube_seq_bg, self.rlams
+            else:
+                return img_seq-img_seq_bg, IFScube_seq-IFScube_seq_bg, img_seq_nc-img_seq_bg, IFScube_seq_nc-IFScube_seq_bg, self.rlams
+
+        if bkgsub==False:
+            if vortex==False:
+                return img_seq, img_seq_bg, IFScube_seq, IFScube_seq_bg, self.rlams
+            else:
+                return img_seq, img_seq_bg, IFScube_seq, IFScube_seq_bg, img_seq_nc, img_seq_bg, IFScube_seq_nc, IFScube_seq_bg, self.rlams
 
 
 
  
+    def point_snr_cube(self,targ=None,cube=None,
+             inst_emissivities = [0.4],inst_temps = [277*u.K],
+             dit=1,nexps=1,extraction='optimal',
+             vapor = 1.0, airmass = 1.0, change_psfs=False,
+             verbose=False,skytrans_off=False,bkg_off=False):
+ 
+        self.skybg = SkyBG(vapor,airmass)
+        self.skytrans = SkyTrans(vapor,airmass)
+        if skytrans_off==True: self.skytrans.y = np.ones(self.skytrans.y.shape)*u.dimensionless_unscaled
+        self.atmodisp = AtmoDispersion(90,20,600)
+
+        self.inst = InstTransEm(inst_emissivities, inst_temps)
+        self.qe = QE()
+
+
+        self.args = {
+                    'SkyBG':self.skybg,
+                    'SkyTrans':self.skytrans,
+                    'InstTransEm':self.inst,
+                    'Filter':self.filt,
+                    'QE':self.qe,
+                    'ProjMat':self.pmat,
+                    'ProjLams':self.plams,
+                    'RectMat':self.rmat,
+                    'C2RectMat':self.c2rmat,
+                    'RectLams':self.rlams,
+                    'ResMode':self.res,
+                    'PSF':self.PSF
+                    }
+            
+        self.fp = FocalPlane(self.args)
+
+        if targ!=None:
+            res = self.fp.get_fp(dit*u.s,nexps,self.pmat,self.rmat,Target=targ,
+                                 extraction=extraction,shot_off=True,
+                                 verbose=verbose,medium=self.med)
+            
+            img_seq,IFScube_seq = res
+
+
+        elif cube!=None:        
+            img_seq,IFScube_seq = self.fp.get_fp(dit*u.s,nexps,self.pmat,self.rmat,cube=cube,
+                                                 extraction=extraction,shot_off=True,
+                                                 verbose=verbose,medium=self.med)
+
+        
+
+        targ_bg = Target(np.linspace(1.8,5.4,1000),np.zeros(1000))
+        img_seq_bg,IFScube_seq_bg = self.fp.get_fp(dit*u.s,nexps,self.pmat,self.rmat,Target=targ_bg,
+                                 extraction=extraction,shot_off=True,
+                                 verbose=verbose,medium=self.med,vortex=False)
+
+        bkgsub_cube = IFScube_seq-IFScube_seq_bg
+        SNRcube_seq = []
+        SNRlist_seq = []
+        for nn in range(nexps):
+            SNRcube = calc_SNR_cube(bkgsub_cube[nn],IFScube_seq_bg[nn])
+            SNRcube_seq.append(SNRcube)
+            if self.med==True:
+                SNRlist = calc_SNR_lam_ap_med(bkgsub_cube[nn],IFScube_seq_bg[nn],self.rlams)
+            else:
+                SNRlist = calc_SNR_lam_ap(bkgsub_cube[nn],IFScube_seq_bg[nn],self.rlams)
+            SNRlist_seq.append(SNRlist_seq)
+        return SNRcube, SNRlist, self.rlams
             

@@ -5,7 +5,9 @@ from .io import *
 import astropy.constants as const
 import astropy.units as u
 
-def phoenix_star(T_s = 3800,logg = 4.5,zz = 0.0,rstar = 1.0,dstar = 20,phoenixdir='data/PHOENIX_HiRes/'):
+def phoenix_star(T_s = 3800,logg = 4.5,zz = 0.0,rstar = 1.0,dstar = 20,
+                 Hmag = None, Lmag=None, Kmag=None, Mmag=None,
+                 phoenixdir='data/PHOENIX_HiRes/'):
     """
     inputs:
         T_s - effectve temperature in K
@@ -27,11 +29,41 @@ def phoenix_star(T_s = 3800,logg = 4.5,zz = 0.0,rstar = 1.0,dstar = 20,phoenixdi
     wav = wav / 1.0e4 ##now units are um
     rstar = rstar*u.R_sun.to(u.cm) 
     dstar = dstar*u.pc.to(u.cm)
-    fluxs = specstar * (rstar / dstar)**2 * 1.0e-4 ##to convert from /cm to /um
+    I_lam = specstar * (rstar / dstar)**2 * 1.0e-4 ##to convert from /cm to /um
+    
+    Lflux = I_lam[np.where(np.abs(wav-3.8)==np.min(np.abs(wav-3.8)))]
+    Kflux = I_lam[np.where(np.abs(wav-2.19)==np.min(np.abs(wav-2.19)))]
+    Mflux = I_lam[np.where(np.abs(wav-5.0)==np.min(np.abs(wav-5.0)))]
+    Hflux = I_lam[np.where(np.abs(wav-1.6)==np.min(np.abs(wav-1.6)))]
+
+    Lmag_t = -2.5*np.log10(Lflux/(Jy_to_flam(288.0,3.8)))
+    Mmag_t = -2.5*np.log10(Mflux/(Jy_to_flam(158.0,5.0)))
+    Kmag_t = -2.5*np.log10(Kflux/(Jy_to_flam(653.0,2.19)))
+    Hmag_t = -2.5*np.log10(Hflux/(Jy_to_flam(1040.0,1.6)))
+
+
+    if Lmag!=None:
+        targ = Target(wav,I_lam*(10**(-(Lmag-Lmag_t)/2.5)))
+    else: targ = Target(wav,I_lam)
+
+    if Mmag!=None:
+        targ = Target(wav,I_lam*(10**(-(Mmag-Mmag_t)/2.5)))
+    else: targ = Target(wav,I_lam)
+
+    if Kmag!=None:
+        targ = Target(wav,I_lam*(10**(-(Kmag-Kmag_t)/2.5)))
+    else: targ = Target(wav,I_lam)
+
+    if Hmag!=None:
+        targ = Target(wav,I_lam*(10**(-(Hmag-Hmag_t)/2.5)))
+    else: targ = Target(wav,I_lam)
+        
     targ = Target(wav,fluxs)
     return targ
 
-def sonora_planet(T_p=300,sg=100,rp=1.0,d=10.0,sonoradir = 'data/sonora_2018/'):
+def sonora_planet(T_p=300,sg=100,rp=1.0,d=10.0,
+                  Hmag=None, Kmag=None, Lmag=None, Mmag=None,
+                  sonoradir = 'data/sonora_2018/'):
     rjup_cm = 6.9911e9
     rplan_cm = rp*rjup_cm
     pc_cm = 3.086e18
@@ -48,52 +80,47 @@ def sonora_planet(T_p=300,sg=100,rp=1.0,d=10.0,sonoradir = 'data/sonora_2018/'):
     ###convert fnu to flambda
     C = 2.998e10 ###cgs speed of light
     flam_tmp = a_dist[:,1] * C / (a_dist[:,0]*1.0e-4)**2 ###now in erg / s / cm^2 / cm
-    flam = flam_tmp * 1.0e-4 ###now in erg / s / cm^2 / um
+    I_lam = flam_tmp * 1.0e-4 ###now in erg / s / cm^2 / um
     wav = a_dist[:,0]
-    targ = Target(wav,flam)
-    return targ
 
-
-def planet_and_bkg(T_p=300,sg=100,rp=1.0,d=10.0,Lmag=None,Mmag=None):
-    target = sonora_planet(T_p=T_p,sg=sg,rp=rp,d=d)
-    wav,I_lam = target.x.value, target.y.value
     Lflux = I_lam[np.where(np.abs(wav-3.8)==np.min(np.abs(wav-3.8)))]
+    Kflux = I_lam[np.where(np.abs(wav-2.19)==np.min(np.abs(wav-2.19)))]
     Mflux = I_lam[np.where(np.abs(wav-5.0)==np.min(np.abs(wav-5.0)))]
     Hflux = I_lam[np.where(np.abs(wav-1.6)==np.min(np.abs(wav-1.6)))]
 
-    Lmag_t = -2.5*np.log10(Lflux/(2.2272e-7))
-    Mmag_t = -2.5*np.log10(Mflux/(1.222e-7))
-    Hmag_t = -2.5*np.log10(Hflux/(1.22e-6))
+    Lmag_t = -2.5*np.log10(Lflux/(Jy_to_flam(288.0,3.8)))
+    Mmag_t = -2.5*np.log10(Mflux/(Jy_to_flam(158.0,5.0)))
+    Kmag_t = -2.5*np.log10(Kflux/(Jy_to_flam(653.0,2.19)))
+    Hmag_t = -2.5*np.log10(Hflux/(Jy_to_flam(1040.0,1.6)))
 
-    ####set this up as a Target
     if Lmag!=None:
         targ = Target(wav,I_lam*(10**(-(Lmag-Lmag_t)/2.5)))
     else: targ = Target(wav,I_lam)
 
     if Mmag!=None:
         targ = Target(wav,I_lam*(10**(-(Mmag-Mmag_t)/2.5)))
+    else: targ = Target(wav,I_lam)
+
+    if Kmag!=None:
+        targ = Target(wav,I_lam*(10**(-(Kmag-Kmag_t)/2.5)))
+    else: targ = Target(wav,I_lam)
+
+    if Hmag!=None:
+        targ = Target(wav,I_lam*(10**(-(Hmag-Hmag_t)/2.5)))
+    else: targ = Target(wav,I_lam)
+    
+    return targ
+
+
+def planet_and_bkg(T_p=300,sg=100,rp=1.0,d=10.0,Lmag=None,Mmag=None,Kmag=None):
+    target = sonora_planet(T_p=T_p,sg=sg,rp=rp,d=d,Kmag=Kmag,Lmag=Lmag,Mmag=Mmag)        
     targ_bg = Target(wav,np.zeros(wav.shape))
     return targ, targ_bg
 
 
-def star_and_bkg(T_s=3800,logg=4.5,zz=0.0,rstar=1.0,dstar=20,Lmag=None,Mmag=None):
-    target = phoenix_star(T_s=T_s,logg=logg,zz=zz,rstar=rstar,dstar=dstar)
-    wav,I_lam = target.x.value, target.y.value
-    Lflux = I_lam[np.where(np.abs(wav-3.8)==np.min(np.abs(wav-3.8)))]
-    Mflux = I_lam[np.where(np.abs(wav-5.0)==np.min(np.abs(wav-5.0)))]
-    Hflux = I_lam[np.where(np.abs(wav-1.6)==np.min(np.abs(wav-1.6)))]
-
-    Lmag_t = -2.5*np.log10(Lflux/(2.2272e-7))
-    Mmag_t = -2.5*np.log10(Mflux/(1.222e-7))
-    Hmag_t = -2.5*np.log10(Hflux/(1.22e-6))
-
-    ####set this up as a Target
-    if Lmag!=None:
-        targ = Target(wav,I_lam*(10**(-(Lmag-Lmag_t)/2.5)))
-    else: targ = Target(wav,I_lam)
-
-    if Mmag!=None:
-        targ = Target(wav,I_lam*(10**(-(Mmag-Mmag_t)/2.5)))
+def star_and_bkg(T_s=3800,logg=4.5,zz=0.0,rstar=1.0,dstar=20,
+                 Kmag=None,Lmag=None,Mmag=None):
+    target = phoenix_star(T_s=T_s,logg=logg,zz=zz,rstar=rstar,dstar=dstar,Kmag=Kmag,Lmag=Lmag,Mmag=Mmag)
     targ_bg = Target(wav,np.zeros(wav.shape))
     return targ, targ_bg
 
@@ -112,41 +139,31 @@ def rotate(origin, point, angle):
     return qy, qx
 
 
-def planet_ADI_scene_lowres(psfs,
-                     T_s=3800,logg_s=4.5,zz_s=0.0,r_s=1.0,Lmag=None,Mmag=None,
-                     T_p=1000,sg_p=100,r_p=1.0,
-                     d=10.0,
-                     PAlist=np.linspace(-45,45,90),p_sep=350.0, p_PA=45.0,
-                     lamlist=np.linspace(1.9,5.3,341),
-                     psfs_coron=None,vortex=False):
-    
-    star = phoenix_star(T_s=T_s,logg=logg_s,zz=zz_s,rstar=r_s,dstar=d)
-    planet = sonora_planet(T_p=T_p,sg=sg_p,rp=r_p,d=d)
+def ADI_scene_targs_lowres(psf_seq,star,lams,
+                            planet=None,
+                            PAlist=np.linspace(-45,45,90),p_sep=350.0, p_PA=45.0,
+                            psf_seq_c=None):
 
-    star_new = spectres(lamlist, star.x.value, star.y.value)
-    planet_new = spectres(lamlist, planet.x.value, planet.y.value)
+    star_new = star.resample(lams)
+
+    if planet!=None:
+        planet_new = planet.resample(lams)
+        seps=np.array([p_sep/20.0])
+        position_angles=np.deg2rad([p_PA])
+        posns = np.array([54+seps*np.cos(-position_angles), 54+seps*np.sin(-position_angles)]).T
+        coords = rotate((54,54),posns[0],PAlist)
 
     scene = np.zeros([len(PAlist),len(star_new), 108, 108])
-    seps=np.array([p_sep/20.0])
-    position_angles=np.deg2rad([p_PA])
-    posns = np.array([54+seps*np.cos(-position_angles), 54+seps*np.sin(-position_angles)]).T
-    coords = rotate((54,54),posns[0],PAlist)
-
-    #plt.scatter(coords[0],coords[1])
-    #plt.show()
-
     scene_conv = np.zeros(scene.shape)
 
-    if vortex==False:
+    if psf_seq_c==False:
         for i in range(len(scene)):
-            scene[i,:,int(coords[1][i]),int(coords[0][i])] = planet_new
+            if planet!= None: scene[i,:,int(coords[1][i]),int(coords[0][i])] = planet_new
             scene[i,:,54,54] = star_new
             for j in range(len(scene[i])):
                 FTPSF = np.fft.fft2(np.fft.fftshift(psfs[i,j]))
                 FTSCENE = np.fft.fft2(np.fft.fftshift(scene[i,j]))
                 FTCONV = FTPSF*FTSCENE
-                #FTPSF = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(psfs[i,j])))
-                #FTSCENE = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(scene[i,j])))
                 convim = np.fft.ifftshift(np.fft.ifft2(FTCONV))
                 scene_conv[i][j] = np.real(convim)
         scene_conv = np.array(scene_conv)*u.erg/u.cm/u.cm/u.s/u.um
@@ -157,7 +174,8 @@ def planet_ADI_scene_lowres(psfs,
             sc_star = scene[i].copy()
             sc_star[:,54,54] = star_new
             sc_planet = scene[i].copy()
-            sc_planet[:,int(coords[1][i]),int(coords[0][i])] = planet_new
+            if planet!=None:
+                sc_planet[:,int(coords[1][i]),int(coords[0][i])] = planet_new
             for j in range(len(scene[i])):
                 FTPSF = np.fft.fft2(np.fft.fftshift(psfs[i,j]))
                 FTPSF_C = np.fft.fft2(np.fft.fftshift(psfs_coron[i,j]))
@@ -176,25 +194,14 @@ def planet_ADI_scene_lowres(psfs,
         scene_conv = np.array(scene_conv)*u.erg/u.cm/u.cm/u.s/u.um
         scene_conv_s = np.array(scene_conv_s)*u.erg/u.cm/u.cm/u.s/u.um
         return scene, scene_conv, scene_conv_s
-    
-            
-def conv_cube_scene(psfs,scene,vortex=False,psfs_coron=None):
 
-    scene_conv = np.zeros(scene.shape)
-
-    if vortex==False:
-        for i in range(len(scene)):
-            for j in range(len(scene[i])):
-                FTPSF = np.fft.fft2(np.fft.fftshift(psfs[i,j]))
-                FTSCENE = np.fft.fft2(np.fft.fftshift(scene[i,j]))
-                FTCONV = FTPSF*FTSCENE
-                convim = np.fft.ifftshift(np.fft.ifft2(FTCONV))
-                scene_conv[i][j] = np.real(convim)
-        scene_conv = np.array(scene_conv)*u.erg/u.cm/u.cm/u.s/u.um
-        return scene, scene_conv
-    else:
-        print('cant do coronagraphic observations yet!')
-        return 
+def Jy_to_flam(flux_Jy,lam_um):
+    fnu_cgs = flux_Jy*1.0e-23
+    c_cgs = const.c.to('cm/s').value
+    lams_cgs = lam_um/1.0e4
+    flam_cgs = fnu_cgs*c_cgs/(lams_cgs)**2
+    flam_um = flam_cgs/1.0e4
+    return flam_um
 
 def flat_mJy_target(flux_mJy):
     #spec_in is input spectrum in mJy

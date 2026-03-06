@@ -128,10 +128,15 @@ class FocalPlane:
                     img += (cube2 * mult_dn[:, None, None]).value
                     #print('scaling cube')
                 img = self.PSF.convolve(psf,img)
+
+            #if adiscene is not None:
+                
+            
             img_flat = np.matrix(img.reshape(np.prod(img.shape),1))
             if vortex == True:
                 img_nc_flat = np.matrix(img_nc.reshape(np.prod(img_nc.shape),1))
                 image_nc = np.array(pmat*img_nc_flat).reshape([2048,2048])
+            
             image = np.array(pmat*img_flat).reshape([2048,2048])
 
             if shot_off==False: 
