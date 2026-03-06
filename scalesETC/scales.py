@@ -122,8 +122,18 @@ class SCALES:
              inst_emissivities = [0.4],inst_temps = [277*u.K],
              dit=1,nexps=1,extraction='optimal',
              vapor = 1.0, airmass = 1.0, change_psfs=False,
-             verbose=False,skytrans_off=False,bkg_off=False):
- 
+             verbose=False,skytrans_off=False,bkg_off=False,
+             xc=None,yc=None):
+
+        if xc==None:
+            if self.med==True:
+                yc=9
+                xc=8
+            else:
+                yc=54
+                xc=54
+            
+        
         self.skybg = SkyBG(vapor,airmass)
         self.skytrans = SkyTrans(vapor,airmass)
         if skytrans_off==True: self.skytrans.y = np.ones(self.skytrans.y.shape)*u.dimensionless_unscaled
@@ -157,18 +167,24 @@ class SCALES:
             
             img_seq,IFScube_seq = res
 
+            
+            targ_bg = Target(np.linspace(1.8,5.4,1000),np.zeros(1000))
+            img_seq_bg,IFScube_seq_bg = self.fp.get_fp(dit*u.s,nexps,self.pmat,self.rmat,Target=targ_bg,
+                                 extraction=extraction,shot_off=True,
+                                 verbose=verbose,medium=self.med,vortex=False)
 
-        elif cube!=None:        
+
+        elif cube!=None:   
             img_seq,IFScube_seq = self.fp.get_fp(dit*u.s,nexps,self.pmat,self.rmat,cube=cube,
                                                  extraction=extraction,shot_off=True,
                                                  verbose=verbose,medium=self.med)
 
         
 
-        targ_bg = Target(np.linspace(1.8,5.4,1000),np.zeros(1000))
-        img_seq_bg,IFScube_seq_bg = self.fp.get_fp(dit*u.s,nexps,self.pmat,self.rmat,Target=targ_bg,
-                                 extraction=extraction,shot_off=True,
-                                 verbose=verbose,medium=self.med,vortex=False)
+            img_seq_bg,IFScube_seq_bg = self.fp.get_fp(dit*u.s,nexps,self.pmat,self.rmat,
+                                                        cube=np.zeros(cube.shape)*u.erg/u.cm/u.cm/u.s/u.um,
+                                                        extraction=extraction,shot_off=True,
+                                                        verbose=verbose,medium=self.med,vortex=False)
 
         bkgsub_cube = IFScube_seq-IFScube_seq_bg
         SNRcube_seq = []
@@ -177,9 +193,11 @@ class SCALES:
             SNRcube = calc_SNR_cube(bkgsub_cube[nn],IFScube_seq_bg[nn])
             SNRcube_seq.append(SNRcube)
             if self.med==True:
-                SNRlist = calc_SNR_lam_ap_med(bkgsub_cube[nn],IFScube_seq_bg[nn],self.rlams)
+                SNRlist = calc_SNR_lam_ap_med(bkgsub_cube[nn],IFScube_seq_bg[nn],self.rlams,yc=yc,xc=xc)
             else:
-                SNRlist = calc_SNR_lam_ap(bkgsub_cube[nn],IFScube_seq_bg[nn],self.rlams)
-            SNRlist_seq.append(SNRlist_seq)
-        return SNRcube, SNRlist, self.rlams
+                SNRlist = calc_SNR_lam_ap(bkgsub_cube[nn],IFScube_seq_bg[nn],self.rlams,yc=yc,xc=xc)
+            SNRlist_seq.append(SNRlist)
+        SNRcube_seq = np.array(SNRcube_seq)
+        SNRlist_seq = np.array(SNRlist_seq)
+        return SNRcube_seq, SNRlist_seq, self.rlams
             

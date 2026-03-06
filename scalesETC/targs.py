@@ -238,10 +238,10 @@ def calc_SNR_cube(signal_cube,bkg_cube):
     snrcube = signal_cube/np.sqrt(signal_cube+bkg_cube)
     return snrcube
 
-def calc_SNR_lam_ap(signal_cube,bkg_cube,rlams):
+def calc_SNR_lam_ap(signal_cube,bkg_cube,rlams,yc=54,xc=54):
     xs = np.linspace(0,107,108)
     ys = np.linspace(0,107,108)
-    dists = np.array([[np.sqrt((x-54)**2+(y-54)**2) for x in xs] for y in ys])
+    dists = np.array([[np.sqrt((x-xc)**2+(y-yc)**2) for x in xs] for y in ys])
     snrs = []
     for ll in range(len(rlams)):
         lam = rlams[ll].value
@@ -253,10 +253,10 @@ def calc_SNR_lam_ap(signal_cube,bkg_cube,rlams):
     return np.array(snrs)
 
 
-def calc_SNR_lam_ap_med(signal_cube,bkg_cube,rlams):
+def calc_SNR_lam_ap_med(signal_cube,bkg_cube,rlams,yc=54,xc=54):
     xs = np.linspace(0,16,17)
     ys = np.linspace(0,17,18)
-    dists = np.array([[np.sqrt((x-8)**2+(y-9)**2) for x in xs] for y in ys])
+    dists = np.array([[np.sqrt((x-xc)**2+(y-yc)**2) for x in xs] for y in ys])
     #plt.imshow(dists)
     #plt.scatter(8,9)
     #plt.show()

@@ -10,7 +10,7 @@ from scipy.sparse.linalg import lsmr
 
 
 class FocalPlane:
-    def __init__(self, args, gain=8):
+    def __init__(self, args, gain=11.):
 
         self.gain = gain #e/DN
         self.SkyBG = args['SkyBG']
@@ -177,7 +177,7 @@ class FocalPlane:
                     IFScube = res_sp[0].reshape([54,108,108])
                 else:
                     IFScube = res_sp[0].reshape([1900,18,17])
-
+            
             IFScube_seq[nexp] = IFScube
             if vortex == True:
                 IFScube_seq_nc[nexp] = IFScube_nc
