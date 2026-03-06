@@ -10,7 +10,7 @@ from scipy.sparse.linalg import lsmr
 
 
 class FocalPlane:
-    def __init__(self, args, gain=11.):
+    def __init__(self, args, gain=40.):
 
         self.gain = gain #e/DN
         self.SkyBG = args['SkyBG']
