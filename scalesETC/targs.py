@@ -41,24 +41,33 @@ def phoenix_star(T_s = 3800,logg = 4.5,zz = 0.0,rstar = 1.0,dstar = 20,
     Kmag_t = -2.5*np.log10(Kflux/(Jy_to_flam(653.0,2.19)))
     Hmag_t = -2.5*np.log10(Hflux/(Jy_to_flam(1040.0,1.6)))
 
+    """
+    print(Lflux)
+    print(Jy_to_flam(288,3.8))
+    print(Lflux/Jy_to_flam(288,3.8))
+    print(Lmag_t)
+    print(Lmag)
+    print(10**((-Lmag-Lmag_t)/2.5))
+    print(Lflux*(10**((-Lmag-Lmag_t)/2.5)))
+    """
+
 
     if Lmag!=None:
         targ = Target(wav,I_lam*(10**(-(Lmag-Lmag_t)/2.5)))
-    else: targ = Target(wav,I_lam)
-
-    if Mmag!=None:
+        
+    elif Mmag!=None:
         targ = Target(wav,I_lam*(10**(-(Mmag-Mmag_t)/2.5)))
-    else: targ = Target(wav,I_lam)
-
-    if Kmag!=None:
+    
+    elif Kmag!=None:
         targ = Target(wav,I_lam*(10**(-(Kmag-Kmag_t)/2.5)))
-    else: targ = Target(wav,I_lam)
 
-    if Hmag!=None:
+    elif Hmag!=None:
         targ = Target(wav,I_lam*(10**(-(Hmag-Hmag_t)/2.5)))
+    
     else: targ = Target(wav,I_lam)
         
-    targ = Target(wav,I_lam)
+    Ltest = targ.y.value[np.where(np.abs(targ.x.value-3.8)==np.min(np.abs(targ.x.value-3.8)))]
+    print(Ltest)
     return targ
 
 def sonora_planet(T_p=300,sg=100,rp=1.0,d=10.0,
@@ -93,19 +102,16 @@ def sonora_planet(T_p=300,sg=100,rp=1.0,d=10.0,
     Kmag_t = -2.5*np.log10(Kflux/(Jy_to_flam(653.0,2.19)))
     Hmag_t = -2.5*np.log10(Hflux/(Jy_to_flam(1040.0,1.6)))
 
-    if Lmag!=None:
+    elif Lmag!=None:
         targ = Target(wav,I_lam*(10**(-(Lmag-Lmag_t)/2.5)))
-    else: targ = Target(wav,I_lam)
 
-    if Mmag!=None:
+    elif Mmag!=None:
         targ = Target(wav,I_lam*(10**(-(Mmag-Mmag_t)/2.5)))
-    else: targ = Target(wav,I_lam)
 
-    if Kmag!=None:
+    elif Kmag!=None:
         targ = Target(wav,I_lam*(10**(-(Kmag-Kmag_t)/2.5)))
-    else: targ = Target(wav,I_lam)
 
-    if Hmag!=None:
+    elif Hmag!=None:
         targ = Target(wav,I_lam*(10**(-(Hmag-Hmag_t)/2.5)))
     else: targ = Target(wav,I_lam)
     
