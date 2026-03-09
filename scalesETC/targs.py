@@ -58,7 +58,7 @@ def phoenix_star(T_s = 3800,logg = 4.5,zz = 0.0,rstar = 1.0,dstar = 20,
         targ = Target(wav,I_lam*(10**(-(Hmag-Hmag_t)/2.5)))
     else: targ = Target(wav,I_lam)
         
-    targ = Target(wav,fluxs)
+    targ = Target(wav,I_lam)
     return targ
 
 def sonora_planet(T_p=300,sg=100,rp=1.0,d=10.0,
