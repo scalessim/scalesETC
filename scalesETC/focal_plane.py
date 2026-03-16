@@ -36,6 +36,7 @@ class FocalPlane:
             self.fov = 2.16*2.16*(u.arcsec)**2
         self.dlam = self.lam[1]-self.lam[0] ###dlam of oversampled wavelength 
 
+
     
     def get_fp(self, dit, nexps, pmat, rmat, 
                Target=None, cube=None, shot_off=False,
@@ -45,6 +46,10 @@ class FocalPlane:
 
         skybg = self.SkyBG.resample(self.lam) * self.fov / self.num_spaxel**2        
         instbg = self.Inst.get_em(self.lam) * self.fov / self.num_spaxel**2
+
+        if medium==True:
+            skybg = self.SkyBG.resample(self.lam) * self.fov / (self.num_spaxel*(self.num_spaxel-1))        
+            instbg = self.Inst.get_em(self.lam) * self.fov / (self.num_spaxel*(self.num_spaxel-1))
 
         qe = self.QE.get_qe(self.lam)
 
@@ -186,5 +191,4 @@ class FocalPlane:
         else:
             return img_seq, IFScube_seq
 
-
-
+    

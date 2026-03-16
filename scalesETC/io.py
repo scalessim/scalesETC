@@ -42,6 +42,15 @@ class Filter(DataFile):
         self.filename = filename
         self.get_data(yunits=u.dimensionless_unscaled)
 
+class ImagerFilter(DataFile):
+    def __init__(self, fkw = 'Lp',dsamp=True): #filename='L_filter.txt'):
+        if dsamp==True:
+            filename = 'imager_filters/'+fkw+'_dsamp10.txt'
+        else:
+            filename = 'imager_filters/'+fkw+'.txt'
+        self.filename = filename
+        self.get_data(yunits=u.dimensionless_unscaled)
+
 
 class SkyBG(DataFile):
     def __init__(self, vapor, airmass, flag='mk'):
@@ -59,7 +68,10 @@ class SkyBG(DataFile):
             self.get_data(xunits=u.nm, yunits=u.photon/u.s / u.nm / u.m**2) #the /arcsec**2 screws up the unit conversion
         else:
             raise ValueError('Site model {} does not exist. Choose mk or cp'.format(flat))
+        self.y=self.y.to(u.photon/u.s/u.micron/u.cm**2)
         self.y /= u.arcsec**2  #added back /arcsec**2
+        #print(self.y)
+        #stop
 
 class SkyTrans(DataFile):
     def __init__(self, vapor, airmass, flag='mk'):
